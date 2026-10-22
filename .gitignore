@@ -1,0 +1,33 @@
+artifacts/
+__pycache__/
+.DS_Store
+.build/
+dist/
+.swiftpm/
+
+# Xcode 与编辑器的本机配置。
+DerivedData/
+xcuserdata/
+*.xcuserstate
+.idea/
+.vscode/
+
+# 本机采集数据、数据库、环境凭据和签名材料不得入库。
+*.log
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.db
+*.db-*
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.mobileprovision
+
+# Python 缓存和本机虚拟环境。
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/

@@ -1,0 +1,4 @@
+interface:
+  display_name: "iOS App 日志采集"
+  short_description: "通过本地脚本发现 iPhone 并采集指定 App 的控制台日志"
+  default_prompt: "使用 $ios-app-logs 采集连接到 Mac 的 iPhone 上指定 App 的日志。"
