@@ -3,7 +3,7 @@
 ## 模块
 
 - `Models/`：日志、会话、设备、采集配置、状态和筛选值类型。
-- `Models/LogColumn.swift`：列的稳定标识与菜单标题；显示偏好以 `hiddenLogColumns` 保存于 UserDefaults，原生表格隐藏列对象而不删除数据。正文隐藏后使用紧凑行高，重新显示时恢复全文排版；行高变化后的视口锚点限制在内容范围内。
+- `Models/LogColumn.swift`：列的稳定标识与菜单标题；显示偏好以 `hiddenLogColumns` 保存于 UserDefaults，HTML 页隐藏相应列但不删除原始数据，正文重新显示时恢复全文排版；列宽拖动在页面内保留。
 - `Services/DeviceService.swift`：actor，读取 devicectl 官方 JSON；缺少 Xcode 时尝试 libimobiledevice 发现设备。
 - `Services/CommandRunner.swift`：后台短命令、并行消费 stdout/stderr、超时清理。
 - `Services/CaptureService.swift`：串行队列管理本工具的读取器、原始文件、双管道解析与批量事件。
@@ -12,8 +12,9 @@
 - `Services/SessionStore.swift`：SQLite actor；会话元数据、记录 upsert、分页、筛选搜索、流式导出。
 - `Services/LogImporter.swift`：后台读取有限大小的 TXT/LOG/JSONL。
 - `AppModel.swift`：MainActor 交互状态、采集生命周期、设备发现轮询、查询版本与导航。
-- `Views/`：SwiftUI 面板与主题，AppKit NSTableView 虚拟列表、选择和复制。
-- `Views/LogMessageLayout.swift`：共用字体和逐字符换行规则，测量完整正文高度。列表按记录正文、列宽与字号缓存行高，宽度变化时重新排版并保留视口锚点；不再截取首行、三行或 1,500 字符摘要。
+- `Views/`：SwiftUI 面板与主题，日志区域由 `LogTableView` 嵌入离线 WKWebView。
+- `Views/LogWebDocument.swift`：连续 HTML 表格，浏览器原生文字选区支持跨列、跨记录复制；普通点击只定位详情，修饰键显式选择完整记录。使用 CSS 完整换行、紧凑列宽、列宽调整、搜索高亮及滚动锚点。
+- `Views/LogTableView.swift`：桥接模型与页面。结构化参数传递日志，DOM 仅用 textContent / 文本节点显示正文；非持久 WebKit 数据存储、CSP 禁止网络资源，导航仅允许 about:blank。主框架事件只传选择状态及必要的记录快照，不打印日志正文。
 - `LumenApp.swift` / `AppDelegate.swift`：菜单命令、退出清理和窗口重开。
 - `skills/ios-app-logs/scripts/ios_logs.py`：不依赖 GUI 的独立 Python 采集器，与桌面版使用相同 devicectl 控制台参数，原始双流落盘并输出 JSON 摘要。仓库入口为 `scripts/ios-logs.sh`，用户技能安装后可独立运行；输出契约见 [脚本采集与技能](script-capture.md)。
 
@@ -23,7 +24,7 @@ App stdout/stderr → 原始字节落盘 → 每个管道独立解码和解析 �
 
 UI 查询携带修订号，陈旧结果不会覆盖新条件。输入后立即回车时保存待执行方向，等相应会话、搜索词和筛选快照完成后再导航。全文搜索独立于当前页面。
 
-原生列表拖选期间保持屏幕数据快照，松开鼠标后再应用后台最新结果。重载在同一事务内按日志 ID 恢复选择，不能沿用行号；选中日志停止自动跟随但不停止采集。复制使用选中时的正文快照，续写和换页不改变待复制内容。
+HTML 页面在鼠标拖选或非空文字选区期间不替换 DOM，只保留最新待显示快照，后台采集与保存继续。取消选区后应用最新快照；主动切换会话、筛选、分页、搜索目标或恢复跟随时结束旧选区。字符复制使用 WebKit 原生行为，完整记录复制使用显示时的原文快照；普通单击不绘制整行选中背景。
 
 暂停滚动只影响导航；浏览历史不停止活动采集。清空视图设置 ID 下界，数据库不删除记录。导出在数据库 actor 内固定最大 ID，分批写临时文件，再替换目标文件。
 

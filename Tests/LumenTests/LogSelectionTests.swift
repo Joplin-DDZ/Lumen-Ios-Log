@@ -22,20 +22,12 @@ final class LogSelectionTests: XCTestCase {
         XCTAssertEqual(model.selectedCopyText, "")
     }
 
-    /// 删除前面的行或页面滑动后，选中状态应跟随 ID 而不是原行号。
-    @MainActor func testReloadRestoresSelectionByID() {
+    /// 页面数据变化不应改变已选记录的 ID 和复制快照。
+    @MainActor func testPageChangesPreserveSelectedSnapshot() {
         let model = AppModel()
-        let coordinator = LogTableView.Coordinator(model: model)
-        let table = LogNativeTable()
-        table.delegate = coordinator; table.dataSource = coordinator
-        coordinator.table = table
-        coordinator.records = [record(10, "十"), record(11, "十一"), record(12, "十二")]
-        model.selectRecords([11], displayedRecords: coordinator.records)
-        coordinator.reload(preserving: nil)
-        XCTAssertEqual(table.selectedRowIndexes, IndexSet(integer: 1))
-        coordinator.records = [record(11, "十一续写"), record(12, "十二"), record(13, "十三")]
-        coordinator.reload(preserving: nil)
-        XCTAssertEqual(table.selectedRowIndexes, IndexSet(integer: 0))
+        model.rows = [record(10, "十"), record(11, "十一"), record(12, "十二")]
+        model.selectRecords([11], displayedRecords: model.rows)
+        model.rows = [record(11, "十一续写"), record(12, "十二"), record(13, "十三")]
         XCTAssertEqual(model.selectedIDs, [11])
         XCTAssertEqual(model.selectedCopyText, "十一")
     }

@@ -165,7 +165,7 @@ struct ContentView: View {
             }
             Spacer()
             Label("自动保存 · 仅此 Mac", systemImage: "checkmark.shield").font(.system(size: 10))
-            Text("Lumen 1.2").font(.system(size: 9, design: .monospaced)).padding(.leading, 15).foregroundStyle(.tertiary)
+            Text("Lumen 1.3").font(.system(size: 9, design: .monospaced)).padding(.leading, 15).foregroundStyle(.tertiary)
         }.foregroundStyle(.secondary).padding(.horizontal, 2)
     }
 
