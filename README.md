@@ -32,11 +32,11 @@ open dist/Lumen.app
 
 ## GitHub 自动打包与 Release
 
-[下载 Release](https://github.com/Joplin-DDZ/Lumen-Ios-Log/releases)。下载 `Lumen-v版本-macOS-universal.zip`，解压后将 `Lumen.app` 放入「应用程序」。采集仍需本机安装完整 Xcode；当前未公证的包可能被 macOS 拦截，请先确认来源，再按系统「隐私与安全性」提示允许打开。
+[下载 Release](https://github.com/Joplin-DDZ/Lumen-Ios-Log/releases)。下载 `Lumen-v版本-macOS-universal.dmg`，双击打开，将 `Lumen.app` 拖到镜像内的 `Applications`（应用程序）入口，完成后推出镜像。采集仍需本机安装完整 Xcode；当前未公证的包可能被 macOS 拦截，请先确认来源，再按系统「隐私与安全性」提示允许打开。
 
-工作流 `.github/workflows/release.yml` 使用 GitHub macOS runner 测试并生成 Universal ZIP 和 SHA-256 校验文件，无需自行配置服务器或 Apple 证书。
+工作流 `.github/workflows/release.yml` 使用 GitHub macOS runner 测试并生成 Universal DMG 和 SHA-256 校验文件，无需自行配置服务器或 Apple 证书。
 
-- 试打包：代码推送后，在 GitHub → Actions →「macOS 打包与发布」→ Run workflow。完成后在该次运行的 Artifacts 下载；保留 14 天，不自动发布 Release。
+- 试打包：代码推送后，在 GitHub → Actions →「macOS 打包与发布」→ Run workflow。完成后在该次运行的 Artifacts 下载；保留 14 天，不自动发布 Release。GitHub 的 Artifacts 下载会额外套一层 ZIP；正式 Release 的 Assets 可直接下载 DMG。
 - 正式发布：先提交并推送需要发布的代码，再推送 `v主版本.次版本.修订号` 标签，例如：
 
   ```bash
@@ -44,9 +44,18 @@ open dist/Lumen.app
   git push origin v1.3.0
   ```
 
-标签发布时 App 版本取自标签，构建号使用 Actions 运行编号。测试和双架构构建通过后，自动创建 Release 并上传 ZIP、校验文件。重复发布同名附件会报错，不会静默替换已经下载的包；修复版本应使用新标签。手动分支构建默认版本为 1.3.0，供测试下载使用。
+标签发布时 App 版本取自标签，构建号使用 Actions 运行编号。测试和双架构构建通过后，自动创建 Release 并上传 DMG、校验文件。重复发布同名附件会报错，不会静默替换已经下载的包；修复版本应使用新标签。手动分支构建默认版本为 1.3.0，供测试下载使用。
 
-首次使用需允许仓库运行 GitHub Actions。发布任务使用内置 `GITHUB_TOKEN` 的 `contents: write` 权限，无需额外 PAT；仓库或组织策略若禁止该权限，需要管理员允许。Developer ID 签名、公证和 DMG 暂未接入。
+首次使用需允许仓库运行 GitHub Actions。发布任务使用内置 `GITHUB_TOKEN` 的 `contents: write` 权限，无需额外 PAT；仓库或组织策略若禁止该权限，需要管理员允许。Developer ID 签名与公证暂未接入。
+
+本地制作同样的安装镜像：
+
+```bash
+bash scripts/build-app.sh release universal
+bash scripts/package-dmg.sh
+```
+
+脚本从应用读取版本，检查双架构和签名后生成 DMG 与 `.dmg.sha256`，镜像只包含应用和安装入口。已发布的 v1.3.0 仍为 ZIP；新工作流发布的新标签使用 DMG。
 
 ## 脚本版与 Codex 技能
 

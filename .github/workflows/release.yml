@@ -40,19 +40,15 @@ jobs:
           python3 tools/test_ios_logs.py
       - name: 构建 Universal 应用
         run: bash scripts/build-app.sh release universal
-      - name: 打包与校验
-        run: |
-          package="Lumen-v${LUMEN_VERSION}-macOS-universal.zip"
-          ditto -c -k --sequesterRsrc --keepParent dist/Lumen.app "dist/$package"
-          cd dist
-          shasum -a 256 "$package" > "$package.sha256"
+      - name: 制作 DMG 安装镜像与校验文件
+        run: bash scripts/package-dmg.sh
       - name: 保存下载包
         uses: actions/upload-artifact@v4
         with:
           name: Lumen-macOS-universal
           path: |
-            dist/*.zip
-            dist/*.sha256
+            dist/*.dmg
+            dist/*.dmg.sha256
           if-no-files-found: error
           retention-days: 14
 
@@ -79,5 +75,5 @@ jobs:
           else
             gh release create "$RELEASE_TAG" packages/* \
               --verify-tag --title "Lumen $RELEASE_TAG" --generate-notes \
-              --notes '支持 macOS 14+、Apple Silicon 和 Intel。下载 Universal ZIP 后解压使用。当前采用临时签名，尚未进行 Apple Developer ID 签名与公证；采集需要本机安装完整 Xcode。'
+              --notes '支持 macOS 14+、Apple Silicon 和 Intel。下载 Universal DMG，打开后将 Lumen 拖入 Applications 安装。当前采用临时签名，尚未进行 Apple Developer ID 签名与公证；采集需要本机安装完整 Xcode。'
           fi
