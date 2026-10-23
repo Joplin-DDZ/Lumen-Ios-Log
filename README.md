@@ -1,6 +1,6 @@
 # Lumen · iPhone 日志工作台
 
-原生 macOS iPhone App 日志查看工具，重点改善 Xcode 控制台的阅读、筛选与会话管理体验。同时提供独立 Python 采集脚本和 Codex 技能，日志保存在本机。
+macOS iPhone App 日志查看工具，重点改善 Xcode 控制台的阅读、筛选与会话管理体验。同时提供独立 Python 采集脚本和 Codex 技能，日志保存在本机。
 
 ## 主要功能
 
@@ -28,7 +28,25 @@ bash scripts/build-app.sh release
 open dist/Lumen.app
 ```
 
-需要 macOS 14+。构建需要 Xcode/Swift 工具链；当前产物为本机 Apple Silicon 构建、临时签名，尚未进行 Developer ID 签名及公证。
+需要 macOS 14+。本地构建默认使用当前机器架构；`bash scripts/build-app.sh release universal` 可生成同时支持 Apple Silicon 与 Intel 的应用。当前采用临时签名，尚未进行 Developer ID 签名及公证。
+
+## GitHub 自动打包与 Release
+
+[下载 Release](https://github.com/Joplin-DDZ/Lumen-Ios-Log/releases)。下载 `Lumen-v版本-macOS-universal.zip`，解压后将 `Lumen.app` 放入「应用程序」。采集仍需本机安装完整 Xcode；当前未公证的包可能被 macOS 拦截，请先确认来源，再按系统「隐私与安全性」提示允许打开。
+
+工作流 `.github/workflows/release.yml` 使用 GitHub macOS runner 测试并生成 Universal ZIP 和 SHA-256 校验文件，无需自行配置服务器或 Apple 证书。
+
+- 试打包：代码推送后，在 GitHub → Actions →「macOS 打包与发布」→ Run workflow。完成后在该次运行的 Artifacts 下载；保留 14 天，不自动发布 Release。
+- 正式发布：先提交并推送需要发布的代码，再推送 `v主版本.次版本.修订号` 标签，例如：
+
+  ```bash
+  git tag -a v1.3.0 -m "Lumen 1.3.0"
+  git push origin v1.3.0
+  ```
+
+标签发布时 App 版本取自标签，构建号使用 Actions 运行编号。测试和双架构构建通过后，自动创建 Release 并上传 ZIP、校验文件。重复发布同名附件会报错，不会静默替换已经下载的包；修复版本应使用新标签。手动分支构建默认版本为 1.3.0，供测试下载使用。
+
+首次使用需允许仓库运行 GitHub Actions。发布任务使用内置 `GITHUB_TOKEN` 的 `contents: write` 权限，无需额外 PAT；仓库或组织策略若禁止该权限，需要管理员允许。Developer ID 签名、公证和 DMG 暂未接入。
 
 ## 脚本版与 Codex 技能
 
@@ -61,9 +79,10 @@ cp -R skills/ios-app-logs "${CODEX_HOME:-$HOME/.codex}/skills/ios-app-logs"
 
 - 包含和排除关键词都支持英文逗号 `,`、中文逗号 `，` 或 `|` 分隔，可混用。包含命中任意一项即显示，排除命中任意一项即隐藏；两者同时填写时，排除优先。包含可启用正则，此时不拆分表达式；排除始终按普通文本匹配。
 - 全会话文本搜索，回车/⌘G 下一个结果，⇧⌘G 上一个结果；搜索遵循当前筛选条件，覆盖未加载的页面。
-- 虚拟列表每页最多 2,000 条；滚动离开底部或暂停只停止跟随，采集与保存继续。
+- 日志页面每页最多 2,000 条；滚动离开底部或暂停只停止跟随，采集与保存继续。
 - 右侧查看完整消息、JSON 格式化和上下文；支持多选与 ⌘C 复制。工具保留原文，级别解析为启发式结果。
-- 选中日志自动暂停跟随，采集继续；拖选期间保持列表稳定，复制使用选中时的正文快照。点击滚动到最新日志可恢复跟随。
+- 日志区域使用离线 HTML 页面，支持浏览器原生字符选择：直接拖选、双击选词、跨列和跨日志连续选择，⌘C 或右键复制文字选区。普通点击只定位详情，不会闪现整行选区。
+- 拖选与非空文字选区期间保持显示快照，后台继续采集保存；取消选区后显示最新数据。切换会话、搜索、翻页或回到最新日志时结束旧选区。Shift / ⌘ 点击可显式选择完整记录，使用 ⌘C 或「日志 → 复制选中的日志」复制完整原文。
 - 收藏筛选、调整字体；列表直接展示完整消息，自动换行和调整行高，详情面板默认收起。清空视图（⌘K）保留已存日志。
 - 搜索栏右侧「显示列」可逐项勾选 #、时间、级别、进程 / 分类、消息；取消勾选即隐藏，设置跨会话与重启保存。隐藏列不改变复制和导出的完整日志。
 - 自动保存会话，重开后可读；导出全部或筛选结果为 TXT/JSONL，⌘O 导入 TXT/LOG/JSONL（最大 32 MiB）。
